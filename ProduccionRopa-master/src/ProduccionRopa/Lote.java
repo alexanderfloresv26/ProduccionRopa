@@ -28,10 +28,8 @@ public class Lote implements Comparable <Lote> {
         }
     };
 
-    public Lote(int numPiezas, LocalDate fechaFabricacion, Prenda p) throws ExcepcionCantidadDePrendasFueraDeLimites {
-        contadorLote ++;
-
-        this.numeroLote = contadorLote;
+    public Lote(int numeroLotem, int numPiezas, LocalDate fechaFabricacion, Prenda p) throws ExcepcionCantidadDePrendasFueraDeLimites {
+        this.numeroLote = numeroLote;
         this.numPiezas = numPiezas;
         this.fechaFabricacion = fechaFabricacion;
         this.prenda = p;

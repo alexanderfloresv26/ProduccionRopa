@@ -22,7 +22,7 @@ public class Prenda implements Comparable <Prenda>{
     };
 
     public Prenda(String genero, String modelo, String tela, double costoMaximo, double costoProduccion, String temporada)
-            throws ExcepcionDeCostoMaximoNoValido, ExcepcionDeCostoFueraDeLimites, ExcepcionDeGeneroNoValido, ExcepcionDeTemporadaNoValida
+            throws ExcepcionDeCostoMaximoNoValido, ExcepcionDeCostoFueraDeLimites, ExcepcionDeTemporadaNoValida, ExcepcionDeGeneroNoValido
     {
         this.genero = genero;
         this.modelo = modelo;
@@ -33,19 +33,25 @@ public class Prenda implements Comparable <Prenda>{
         validacion();
     }
 
-    public void validacion() throws ExcepcionDeCostoFueraDeLimites, ExcepcionDeCostoMaximoNoValido, ExcepcionDeGeneroNoValido, ExcepcionDeTemporadaNoValida
-    {
+    public void validacion() throws ExcepcionDeCostoFueraDeLimites, ExcepcionDeCostoMaximoNoValido, ExcepcionDeTemporadaNoValida
+            , ExcepcionDeGeneroNoValido{
         if (costoMaximo <= 0)
             throw new ExcepcionDeCostoMaximoNoValido("El costo de producción maximo es invalido!!!");
 
         if (costoProduccion < 0 || costoProduccion > costoMaximo)
             throw new ExcepcionDeCostoFueraDeLimites("El costo de producción está fuera de los limites permitidos!");
 
-        if (!genero.equalsIgnoreCase("masculino") && !genero.equalsIgnoreCase("femenino") && !genero.equalsIgnoreCase("mixto"))
-            throw new ExcepcionDeGeneroNoValido("El genero es invalido");
-
-        if (!temporada.equalsIgnoreCase("primavera") && !temporada.equalsIgnoreCase("verano") && !temporada.equalsIgnoreCase("otoño") && !temporada.equalsIgnoreCase("invierno"))
+        try {
+            Temporada.valueOf(temporada.toUpperCase());
+        } catch (IllegalArgumentException ex) {
             throw new ExcepcionDeTemporadaNoValida("La temporada es invalida");
+        }
+
+        try {
+            Genero.valueOf(genero.toUpperCase());
+        } catch (IllegalArgumentException ex) {
+            throw new ExcepcionDeGeneroNoValido("El genero es invalido");
+        }
     }
 
 
