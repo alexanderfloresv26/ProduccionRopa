@@ -1,49 +1,49 @@
 package ui;
 
-import Excepciones.ExcepcionCantidadDePrendasFueraDeLimites;
+import Excepciones.*;
 import ProduccionRopa.Lote;
 import ProduccionRopa.Prenda;
+import persistencia.ArchivoRandomPrenda;
 
 import java.time.LocalDate;
-import java.util.ArrayList;
 
 public class ValidacionLote {
 
     private Validacion validacion;
-    private ArrayList<Prenda> prendas;
+    private ArchivoRandomPrenda archivoPrenda;
 
-    public ValidacionLote(Validacion validacion, ArrayList<Prenda> prendas) {
+    public ValidacionLote(Validacion validacion, ArchivoRandomPrenda archivoPrenda) {
         this.validacion = validacion;
-        this.prendas = prendas;
+        this.archivoPrenda = archivoPrenda;
     }
 
     public int leerNumeroLote(){
-        return validacion.leerInt("Proporciona el Lote:",1,1000,"El lote no es valido!!");
+        return validacion.leerInt("Proporciona el numero de lote:",1,10000,"Numero de lote no valido!!");
     }
 
     public int leerNumeroPiezas(){
-        return validacion.leerInt("Proporciona el total de piezas:",1,1000,"El lote no es valido!!");
+        return validacion.leerInt("Proporciona el total de piezas:",50,350,"Numero de piezas no valido!!");
     }
 
-    public Prenda leerPrenda(){
+    public Prenda leerPrenda() throws ExcepcionDeTemporadaNoValida, ExcepcionDeGeneroNoValido,
+            ExcepcionDeCostoFueraDeLimites, ExcepcionDeCostoMaximoNoValido {
         String modelo = validacion.leerString("Proporciona el modelo de la prenda:", null, "Modelo invalido");
-        for(Prenda p : prendas){
-            if(p.getModelo().equalsIgnoreCase(modelo))
-                return p;
-        }
-        return null;
+        return archivoPrenda.obtenerPrenda(modelo);
     }
 
     public LocalDate leerFechaFabricacion(){
-        return validacion.leerLocalDate("Ingresa la fecha de fabricacion:", null, "Fecha de fabricacion invalida");
+        return validacion.leerLocalDate("Ingresa la fecha de fabricacion (YYYY-MM-DD):", null, "Fecha de fabricacion invalida");
     }
 
-    public Lote leerLote() throws ExcepcionCantidadDePrendasFueraDeLimites {
+    public Lote leerLote() throws ExcepcionCantidadDePrendasFueraDeLimites, ExcepcionDeTemporadaNoValida,
+            ExcepcionDeGeneroNoValido, ExcepcionDeCostoFueraDeLimites, ExcepcionDeCostoMaximoNoValido {
         int numero=leerNumeroLote();
         int piezas=leerNumeroPiezas();
         LocalDate fechaFabricacion=leerFechaFabricacion();
         Prenda prenda=leerPrenda();
+        if(prenda==null){
+            throw new IllegalArgumentException("La prenda no existe!!");
+        }
         return new Lote(numero,piezas,fechaFabricacion,prenda);
     }
-
 }

@@ -11,13 +11,13 @@ import java.util.Scanner;
 
 public class Validacion {
 
-    private static Scanner input;
+    private Scanner input;
 
     public Validacion(Scanner input) {
         this.input = input;
     }
 
-    public static long leerLong(String texto, long min, long max, String error){
+    public long leerLong(String texto, long min, long max, String error){
         long enteroLargo;
         if(min>=max)
             throw new IllegalArgumentException("EL valor mínimo debe ser menor al máximo");
@@ -93,5 +93,4 @@ public class Validacion {
         }while(resultado == null);
         return resultado;
     }
-
 }

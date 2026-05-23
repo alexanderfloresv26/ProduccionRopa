@@ -8,18 +8,18 @@ public class Visualiazacion {
 
     public void visualizaPrenda(Prenda prenda){
         StringBuilder sb=new StringBuilder();
-        sb.append(String.format("%08d ",prenda.getModelo()));
-        sb.append(String.format("%-30s ",prenda.getGenero()));
-        sb.append(String.format("%02d ",prenda.getTemporada()));
-        sb.append(String.format("%-20s ",prenda.getTela()));
-        sb.append(String.format("%6.2f ",prenda.getCostoProduccion()));
-        sb.append(String.format("%-12s ",prenda.getCostoMaximo()));
+        sb.append(String.format("%-30s ", prenda.getModelo()));
+        sb.append(String.format("%-12s ", prenda.getGenero()));
+        sb.append(String.format("%-12s ", prenda.getTemporada()));
+        sb.append(String.format("%-20s ", prenda.getTela()));
+        sb.append(String.format("%10.2f ", prenda.getCostoProduccion()));
+        sb.append(String.format("%10.2f ", prenda.getCostoMaximo()));
         System.out.println(sb.toString());
     }
 
     public void visualizaEncabezadoPrenda(){
-        System.out.println(String.format("%-8s %-30s %-4s %-20s %-6s %-12s","Modelo","Genero","Temporada",
-                "Tela","Costo Produccion","Costo Maximo de Produccion"));
+        System.out.println(String.format("%-30s %-12s %-12s %-20s %10s %10s","Modelo","Genero","Temporada",
+                "Tela","Costo Prod.","Costo Max."));
     }
 
     public void visualizaTodosPrenda(ArrayList<Prenda> prendas){
@@ -31,16 +31,15 @@ public class Visualiazacion {
 
     public void visualizaLote(Lote lote){
         StringBuilder sb=new StringBuilder();
-        sb.append(String.format("%08d ",lote.getNumeroLote()));
-        sb.append(String.format("%-30s ",lote.getPrenda()));
-        sb.append(String.format("%02d ",lote.getFechaFabricacion()));
-        sb.append(String.format("%-20s ",lote.getNumPiezas()));
+        sb.append(String.format("%08d ", lote.getNumeroLote()));
+        sb.append(String.format("%-30s ", lote.getPrenda().getModelo()));
+        sb.append(String.format("%-12s ", lote.getFechaFabricacion().toString()));
+        sb.append(String.format("%6d ", lote.getNumPiezas()));
         System.out.println(sb.toString());
     }
 
     public void visualizaEncabezadoLote(){
-        System.out.println(String.format("%-8s %-30s %-4s %-20s %-6s %-12s","No. Lote","Prenda","Fecha de Fabricacion",
-                "Numero de Piezas"));
+        System.out.println(String.format("%-8s %-30s %-12s %-6s","No. Lote","Modelo Prenda","Fecha Fabricacion","Piezas"));
     }
 
     public void visualizaTodosLotes(ArrayList<Lote> lotes){

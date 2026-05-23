@@ -14,7 +14,6 @@ public class Prenda implements Comparable <Prenda>{
     private double costoProduccion;
     private String temporada;
 
-
     private static Comparator<Prenda> comparator = new Comparator<Prenda>(){
         public int compare(Prenda o1, Prenda o2){
             return o1.compareTo(o2);
@@ -54,13 +53,25 @@ public class Prenda implements Comparable <Prenda>{
         }
     }
 
-
     public void setCostoProduccion(double costoProduccion) throws ExcepcionDeCostoFueraDeLimites
     {
         if (costoProduccion > 0 && costoProduccion <= getCostoMaximo())
             this.costoProduccion = costoProduccion;
         else
             throw new ExcepcionDeCostoFueraDeLimites("El costo de producción está fuera de los limites permitidos!");
+    }
+
+    public void setTela(String tela){
+        this.tela = tela;
+    }
+
+    public void setTemporada(String temporada) throws ExcepcionDeTemporadaNoValida {
+        try {
+            Temporada.valueOf(temporada.toUpperCase());
+            this.temporada = temporada;
+        } catch (IllegalArgumentException ex) {
+            throw new ExcepcionDeTemporadaNoValida("La temporada es invalida");
+        }
     }
 
     public String getGenero() {return genero;}
@@ -91,13 +102,13 @@ public class Prenda implements Comparable <Prenda>{
     public boolean equals(Object o) {
         if (!(o instanceof Prenda prenda)) return false;
         return Objects.equals(genero, prenda.genero) && Objects.equals(modelo, prenda.modelo) && Objects.equals(tela, prenda.tela)
-                &&Double.compare(costoProduccion, prenda.costoProduccion) == 0 && Double.compare(costoMaximo, prenda.costoMaximo) == 0 &&  Objects.equals(temporada, prenda.temporada);
+                && Double.compare(costoProduccion, prenda.costoProduccion) == 0 && Double.compare(costoMaximo, prenda.costoMaximo) == 0 &&  Objects.equals(temporada, prenda.temporada);
     }
 
     @Override
     public int hashCode() {
-       int result = Double.hashCode(costoProduccion);
-       result = 31 * result + Objects.hashCode(costoMaximo);
+        int result = Double.hashCode(costoProduccion);
+        result = 31 * result + Objects.hashCode(costoMaximo);
         result = 31 * result + Objects.hashCode(genero);
         result = 31 * result + Objects.hashCode(modelo);
         result = 31 * result + Objects.hashCode(tela);
@@ -121,4 +132,3 @@ public class Prenda implements Comparable <Prenda>{
         return this.genero.compareTo(o.genero);
     }
 }
-

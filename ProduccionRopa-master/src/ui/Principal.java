@@ -5,9 +5,7 @@ import ProduccionRopa.*;
 import persistencia.ArchivoRandomLote;
 import persistencia.ArchivoRandomPrenda;
 
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.List;
 import java.util.Scanner;
 
 public class Principal {
@@ -22,7 +20,6 @@ public class Principal {
 
     public Principal() {
         validacion = new Validacion(input);
-        // Inicializar archivos
         archivoPrenda = new ArchivoRandomPrenda("prendas.dat");
         archivoLote = new ArchivoRandomLote("lotes.dat");
         validacionlote = new ValidacionLote(validacion, archivoPrenda);
@@ -32,10 +29,11 @@ public class Principal {
     }
 
     private byte opcion() {
-        return validacion.leerByte(menu, (byte) 1, (byte) 3, "Opcion invalida");
+        return validacion.leerByte(menu, (byte) 1, (byte) 8, "Opcion invalida");
     }
 
-    private void agregarLote() throws ExcepcionCantidadDePrendasFueraDeLimites {
+    private void agregarLote() throws ExcepcionCantidadDePrendasFueraDeLimites, ExcepcionDeTemporadaNoValida,
+            ExcepcionDeGeneroNoValido, ExcepcionDeCostoFueraDeLimites, ExcepcionDeCostoMaximoNoValido {
         Lote lote = validacionlote.leerLote();
         try {
             archivoLote.agregaLote(lote);
@@ -92,20 +90,20 @@ public class Principal {
         menu = "Menu principal\n";
         menu += "1.- Prendas\n";
         menu += "2.- Lotes\n";
-        menu += "3.- Salir\n";
-        menu += "Proporciona opción:[1..3]:";
+        menu += "3.- Recuperar registros eliminados\n";
+        menu += "4.- Salir\n";
+        menu += "Proporciona opción:[1..4]:";
     }
 
     private void capturaModificacionesLote(Lote lote) {
         String menu = "Menu de opciones\n";
-        menu += "1.- Modificar número de piezas\n";
-        menu += "2.- Modificar fecha de fabricación\n";
+        menu += "1.- Modificar numero de piezas\n";
+        menu += "2.- Modificar fecha de fabricacion\n";
         menu += "Selecciona opcion[1..2]:\n";
         byte opcion = validacion.leerByte(menu, (byte) 1, (byte) 2, "Opcion invalida");
-
         switch (opcion) {
             case 1:
-                int nuevasPiezas = validacion.leerInt("Proporciona el nuevo número de piezas:", 50, 350, "Cantidad inválida");
+                int nuevasPiezas = validacionlote.leerNumeroPiezas();
                 try {
                     lote.setNumPiezas(nuevasPiezas);
                     archivoLote.modificaLote(lote);
@@ -115,41 +113,47 @@ public class Principal {
                 }
                 break;
             case 2:
-                String nuevaFecha = validacion.leerString("Proporciona la nueva fecha (YYYY-MM-DD):", null, "Fecha inválida");
-                lote.setFechaFabricacion(java.time.LocalDate.parse(nuevaFecha));
+                java.time.LocalDate nuevaFecha = validacionlote.leerFechaFabricacion();
+                lote.setFechaFabricacion(nuevaFecha);
                 archivoLote.modificaLote(lote);
                 System.out.println("Lote modificado exitosamente");
                 break;
         }
     }
 
-    private void capturaModificacionesPrenda(Prenda prenda) throws ExcepcionDeTemporadaNoValida, ExcepcionDeGeneroNoValido,
-            ExcepcionDeCostoFueraDeLimites, ExcepcionDeCostoMaximoNoValido {
+    private void capturaModificacionesPrenda(Prenda prenda) {
         String menu = "Menu de opciones\n";
         menu += "1.- Modificar tela\n";
-        menu += "2.- Modificar costo de producción\n";
+        menu += "2.- Modificar costo de produccion\n";
         menu += "3.- Modificar temporada\n";
         menu += "Selecciona opcion[1..3]:\n";
         byte opcion = validacion.leerByte(menu, (byte) 1, (byte) 3, "Opcion invalida");
-
         switch (opcion) {
             case 1:
                 String nuevaTela = validacionPrenda.leerTela();
-                prenda.getTela();
+                prenda.setTela(nuevaTela);
                 archivoPrenda.modificaPrenda(prenda);
                 System.out.println("Prenda modificada exitosamente");
                 break;
             case 2:
                 double nuevoCosto = validacionPrenda.leerCostoProduccion();
-                prenda.setCostoProduccion(nuevoCosto);
-                archivoPrenda.modificaPrenda(prenda);
-                System.out.println("Prenda modificada exitosamente");
+                try {
+                    prenda.setCostoProduccion(nuevoCosto);
+                    archivoPrenda.modificaPrenda(prenda);
+                    System.out.println("Prenda modificada exitosamente");
+                } catch (ExcepcionDeCostoFueraDeLimites e) {
+                    System.err.println(e.getMessage());
+                }
                 break;
             case 3:
                 String nuevaTemporada = validacionPrenda.leerTemporada();
-                prenda.setTemporada(nuevaTemporada);
-                archivoPrenda.modificaPrenda(prenda);
-                System.out.println("Prenda modificada exitosamente");
+                try {
+                    prenda.setTemporada(nuevaTemporada);
+                    archivoPrenda.modificaPrenda(prenda);
+                    System.out.println("Prenda modificada exitosamente");
+                } catch (ExcepcionDeTemporadaNoValida e) {
+                    System.err.println(e.getMessage());
+                }
                 break;
         }
     }
@@ -183,22 +187,23 @@ public class Principal {
         Prenda prenda = archivoPrenda.obtenerPrenda(modelo);
         if (prenda != null) {
             visualizacion.visualizaPrenda(prenda);
-            // Mostrar lotes asociados
-            List<Lote> lotes = archivoLote.obtenerLotesPorPrenda(modelo, prenda);
-            if (!lotes.isEmpty()) {
-                System.out.println("\n--- Lotes asociados ---");
-                for (Lote l : lotes) {
-                    visualizacion.visualizaLote(l);
-                }
-            }
         } else {
             System.out.println("Prenda no encontrada!!");
         }
     }
 
-    private void listarPrenda() throws ExcepcionDeTemporadaNoValida, ExcepcionDeGeneroNoValido,
-            ExcepcionDeCostoFueraDeLimites, ExcepcionDeCostoMaximoNoValido {
-        System.out.println("Función en desarrollo - Listar todas las prendas");
+    private void listarPrenda() {
+        long numReg = archivoPrenda.getNumeroRegistros();
+        for(int i = 1; i <= numReg; i++){
+            try {
+                Prenda prenda = archivoPrenda.obtenerPrenda(i);
+                if(prenda != null){
+                    visualizacion.visualizaPrenda(prenda);
+                }
+            } catch (Exception e) {
+                System.err.println(e.getMessage());
+            }
+        }
     }
 
     private void mostrarLote() {
@@ -206,16 +211,28 @@ public class Principal {
         Lote lote = archivoLote.obtenerLote(numero);
         if (lote != null) {
             visualizacion.visualizaLote(lote);
-            System.out.println("Costo de producción del lote: $" + lote.calcularCostoProduccionLote());
-            System.out.println("Precio de venta por pieza (15%): $" + lote.calcularPrecioVentaPorPieza());
-            System.out.println("Precio de venta del lote completo (5% extra): $" + lote.calcularPrecioVentaPorLote());
+            System.out.println("Costo de produccion del lote: $" + lote.calcularCostoProduccionLote());
+            System.out.println("Monto recuperacion venta individual (15%): $" + lote.calcularMontoRecuperacionVentaIndividual());
+            System.out.println("Monto recuperacion venta por lote (5%): $" + lote.calcularMontoRecuperacionVentaPorLote());
         } else {
             System.out.println("Lote no encontrado!!");
         }
     }
 
     private void listarLote() {
-        System.out.println("Función en desarrollo - Listar todos los lotes");
+        long numReg = archivoLote.getNumeroRegistros();
+        for(int i = 1; i <= numReg; i++){
+            Lote lote = archivoLote.obtenerLote(i);
+            if(lote != null){
+                visualizacion.visualizaLote(lote);
+            }
+        }
+    }
+
+    private void recuperarEliminados() {
+        archivoPrenda.recuperarEliminados();
+        archivoLote.recuperarEliminados();
+        System.out.println("Registros eliminados recuperados!!");
     }
 
     public void run() throws ExcepcionDeTemporadaNoValida, ExcepcionDeGeneroNoValido,
@@ -230,8 +247,11 @@ public class Principal {
                 case 2:
                     runL();
                     break;
+                case 3:
+                    recuperarEliminados();
+                    break;
             }
-        } while (opcion != 3);
+        } while (opcion != 4);
     }
 
     public void runR() throws ExcepcionDeTemporadaNoValida, ExcepcionDeGeneroNoValido,
@@ -245,7 +265,6 @@ public class Principal {
         menuPrendas += "5.- Listar prendas\n";
         menuPrendas += "6.- Salir\n";
         menuPrendas += "Proporciona opción:[1..6]:";
-
         do {
             opcion = validacion.leerByte(menuPrendas, (byte) 1, (byte) 6, "Opcion invalida");
             switch (opcion) {
@@ -268,7 +287,8 @@ public class Principal {
         } while (opcion != 6);
     }
 
-    public void runL() throws ExcepcionCantidadDePrendasFueraDeLimites {
+    public void runL() throws ExcepcionCantidadDePrendasFueraDeLimites, ExcepcionDeTemporadaNoValida,
+            ExcepcionDeGeneroNoValido, ExcepcionDeCostoFueraDeLimites, ExcepcionDeCostoMaximoNoValido {
         byte opcion;
         String menuLotes = "Menu de opciones para: Lotes\n";
         menuLotes += "1.- Agregar lote\n";
@@ -278,7 +298,6 @@ public class Principal {
         menuLotes += "5.- Listar lotes\n";
         menuLotes += "6.- Salir\n";
         menuLotes += "Proporciona opción:[1..6]:";
-
         do {
             opcion = validacion.leerByte(menuLotes, (byte) 1, (byte) 6, "Opcion invalida");
             switch (opcion) {

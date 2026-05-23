@@ -19,7 +19,6 @@ public class Lote implements Comparable <Lote> {
     private static final int MIN_PIEZAS = 50;
     private static final int MAX_PIEZAS = 350;
 
-
     private static Comparator<Lote> comparator = new Comparator<Lote>() {
         public int compare(Lote o1, Lote o2) {
             return o1.compareTo(o2);
@@ -31,7 +30,6 @@ public class Lote implements Comparable <Lote> {
         this.numPiezas = numPiezas;
         this.fechaFabricacion = fechaFabricacion;
         this.prenda = p;
-
         validacion();
     }
 
@@ -62,8 +60,18 @@ public class Lote implements Comparable <Lote> {
         return numPiezas;
     }
 
+    public void setNumPiezas(int numPiezas) throws ExcepcionCantidadDePrendasFueraDeLimites {
+        if (numPiezas < MIN_PIEZAS || numPiezas > MAX_PIEZAS)
+            throw new ExcepcionCantidadDePrendasFueraDeLimites("Numero de piezas fuera de los limites permitidos");
+        this.numPiezas = numPiezas;
+    }
+
     public LocalDate getFechaFabricacion() {
         return fechaFabricacion;
+    }
+
+    public void setFechaFabricacion(LocalDate fechaFabricacion) {
+        this.fechaFabricacion = fechaFabricacion;
     }
 
     public Prenda getPrenda() {
