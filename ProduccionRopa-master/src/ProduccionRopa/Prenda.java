@@ -57,7 +57,7 @@ public class Prenda implements Comparable <Prenda>{
 
     public void setCostoProduccion(double costoProduccion) throws ExcepcionDeCostoFueraDeLimites
     {
-        if (0 < costoProduccion && costoProduccion < getCostoMaximo())
+        if (costoProduccion > 0 && costoProduccion <= getCostoMaximo())
             this.costoProduccion = costoProduccion;
         else
             throw new ExcepcionDeCostoFueraDeLimites("El costo de producción está fuera de los limites permitidos!");

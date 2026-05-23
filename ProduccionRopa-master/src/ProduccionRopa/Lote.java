@@ -8,8 +8,6 @@ import java.util.Objects;
 
 public class Lote implements Comparable <Lote> {
 
-    private static int contadorLote = 0;
-
     private int numeroLote;
     private int numPiezas;
     private LocalDate fechaFabricacion;
@@ -28,7 +26,7 @@ public class Lote implements Comparable <Lote> {
         }
     };
 
-    public Lote(int numeroLotem, int numPiezas, LocalDate fechaFabricacion, Prenda p) throws ExcepcionCantidadDePrendasFueraDeLimites {
+    public Lote(int numeroLote, int numPiezas, LocalDate fechaFabricacion, Prenda p) throws ExcepcionCantidadDePrendasFueraDeLimites {
         this.numeroLote = numeroLote;
         this.numPiezas = numPiezas;
         this.fechaFabricacion = fechaFabricacion;

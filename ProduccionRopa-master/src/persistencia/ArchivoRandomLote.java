@@ -1,203 +1,230 @@
 package persistencia;
 
+import Excepciones.ExcepcionCantidadDePrendasFueraDeLimites;
+import ProduccionRopa.Lote;
+import ProduccionRopa.Prenda;
+
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.RandomAccessFile;
+import java.time.LocalDate;
 
 public class ArchivoRandomLote {
-
     private RandomAccessFile archivo;
     private String nombre;
-    private final long size=64;// Tamaño del registro
-    private final long offset=56;
+    private final long size = 64;  // Tamaño del registro
+    private final long offset = 56;
 
     public ArchivoRandomLote(String nombre) {
         this.nombre = nombre;
     }
 
     public void open() throws FileNotFoundException {
-        archivo= new RandomAccessFile(this.nombre,"rw");
+        archivo = new RandomAccessFile(this.nombre, "rw");
     }
 
-    public boolean existe(long numeroControl){
-        boolean existe=false;
+    // Busca por número de lote
+    public boolean existe(int numeroLote) {
+        boolean existe = false;
         try {
             archivo.seek(1);
-            while(true){
-                long ncontrol=archivo.readLong();
-                if(ncontrol==numeroControl){
-                    existe=true;
+            while (true) {
+                int numLote = archivo.readInt();
+                if (numLote == numeroLote) {
+                    existe = true;
                     break;
                 }
-                archivo.seek(archivo.getFilePointer()+offset);
+                archivo.seek(archivo.getFilePointer() + offset);
             }
-        }catch(IOException e){
+        } catch (IOException e) {
         }
         return existe;
     }
 
-    private Alumno getAlumno() throws IOException {
-        archivo.seek(archivo.getFilePointer()+1);
-        long noControl=archivo.readLong();
-        String nombre=archivo.readUTF();
-        byte semestre=archivo.readByte();
-        String carrera=archivo.readUTF();
-        float promedio=archivo.readFloat();
-        Genero genero=Genero.values()[archivo.readByte()];
-        return new Alumno(noControl,nombre,semestre,carrera,promedio,genero);
+    private Lote getLote(Prenda prenda) throws IOException, ExcepcionCantidadDePrendasFueraDeLimites {
+        archivo.seek(archivo.getFilePointer() + 1);
+        int numeroLote = archivo.readInt();
+        int numPiezas = archivo.readInt();
+        String fechaStr = archivo.readUTF();
+        String modeloPrenda = archivo.readUTF();
+
+        LocalDate fechaFabricacion = LocalDate.parse(fechaStr);
+
+        return new Lote(numeroLote, numPiezas, fechaFabricacion, prenda);
     }
 
-    public boolean existe(Alumno alumno){
-        boolean existe=false;
-        try{
-            while(true){
-                if(alumno.equals(getAlumno())){
-                    existe=true;
+    public boolean existe(Lote lote) {
+        boolean existe = false;
+        try {
+            this.open();
+            while (true) {
+                if (existe(lote.getNumeroLote())) {
+                    existe = true;
                     break;
                 }
             }
-        }catch(IOException e){}
+        } catch (IOException e) {
+        }
         return existe;
     }
 
-    private void grabarRegistro(Alumno alumno){
+    private void grabarRegistro(Lote lote) {
         try {
             archivo.seek(archivo.length());
-            archivo.writeBoolean(false);
-            archivo.writeLong(alumno.getNumeroControl());
-            archivo.writeUTF(String.format("%-30s",alumno.getNombre()));
-            archivo.writeByte(alumno.getSemestre());
-            archivo.writeUTF(String.format("%-15s",alumno.getCarrera()));
-            archivo.writeFloat(alumno.getPromedio());
-            archivo.writeByte(Genero.valueOf(alumno.getGenero()).ordinal());
-        }catch(IOException e){}
+            archivo.writeBoolean(false);  // Indicador de no eliminado
+            archivo.writeInt(lote.getNumeroLote());
+            archivo.writeInt(lote.getNumPiezas());
+            archivo.writeUTF(lote.getFechaFabricacion().toString());
+            archivo.writeUTF(String.format("%-30s", lote.getPrenda().getModelo()));
+        } catch (IOException e) {
+        }
     }
 
-    public void agregaAlumno(Alumno alumno) {
-        if(alumno==null)
-            throw new NullPointerException("Alumno null!");
+    public void agregaLote(Lote lote) {
+        if (lote == null)
+            throw new NullPointerException("Lote null!");
         try {
             this.open();
-            if(!existe(alumno.getNumeroControl())){
-                grabarRegistro(alumno);
+            if (!existe(lote.getNumeroLote())) {
+                grabarRegistro(lote);
                 this.close();
-            }else {
+            } else {
                 this.close();
-                throw new IllegalArgumentException("Alumno existe!");
+                throw new IllegalArgumentException("El lote ya existe!");
             }
-        }catch(IOException e){}
+        } catch (IOException e) {
+        }
     }
 
-    public void eliminarAlumno(Alumno alumno){
-        if(alumno==null)
-            throw new NullPointerException("Alumno null!");
-        try{
+    public void eliminarLote(Lote lote) {
+        if (lote == null)
+            throw new NullPointerException("Lote null!");
+        try {
             this.open();
-            if(existe(alumno)){
-                archivo.seek(archivo.getFilePointer()-size);
+            if (existe(lote)) {
+                archivo.seek(archivo.getFilePointer() - size);
                 archivo.writeBoolean(true);
             }
             this.close();
-        }catch(IOException e){}
+        } catch (IOException e) {
+        }
     }
 
-    public void modificaAlumno(Alumno alumno){
-        if(alumno==null)
-            throw new NullPointerException("Alumno null!");
-        try{
+    public void modificarLote(Lote lote) {
+        if (lote == null)
+            throw new NullPointerException("Lote null!");
+        try {
             this.open();
-            if(existe(alumno.getNumeroControl())){
-                //archivo.seek(archivo.getFilePointer()+30);
-                archivo.writeUTF(String.format("%-30s",alumno.getNombre()));
-                archivo.writeByte(alumno.getSemestre());
-                archivo.writeUTF(String.format("%-15s",alumno.getCarrera()));
-                archivo.writeFloat(alumno.getPromedio());
+            if (existe(lote.getNumeroLote())) {
+                // Posicionarse después del número de lote y número de piezas
+                archivo.writeInt(lote.getNumPiezas());
+                archivo.writeUTF(lote.getFechaFabricacion().toString());
+                archivo.writeUTF(String.format("%-30s", lote.getPrenda().getModelo()));
             }
             this.close();
-        }catch (IOException e){}
+        } catch (IOException e) {
+        }
     }
 
-    public long getNumeroRegistros(){
-        long numeroRegistros=0;
-        try{
+    public void eliminarLotesPorPrenda(String modeloPrenda) {
+        try {
             this.open();
-            while(true){
-                if(!archivo.readBoolean())
+            long posicionInicio = 1;  // Saltar el primer byte
+
+            while (true) {
+                try {
+                    archivo.seek(posicionInicio);
+                    boolean eliminado = archivo.readBoolean();
+
+                    if (!eliminado) {
+                        int numLote = archivo.readInt();
+                        int numPiezas = archivo.readInt();
+                        String fechaStr = archivo.readUTF();
+                        String modelo = archivo.readUTF();
+
+                        if (modelo.trim().equals(modeloPrenda)) {
+                            // Marcar como eliminado
+                            archivo.seek(posicionInicio);
+                            archivo.writeBoolean(true);
+                        }
+                    }
+
+                    posicionInicio += size;
+                } catch (IOException e) {
+                    break;  // Fin del archivo
+                }
+            }
+            this.close();
+        } catch (IOException e) {
+        }
+    }
+
+    public long getNumeroRegistros() {
+        long numeroRegistros = 0;
+        try {
+            this.open();
+            while (true) {
+                if (!archivo.readBoolean())
                     numeroRegistros++;
-                archivo.seek(archivo.getFilePointer()+(size-1));
+                archivo.seek(archivo.getFilePointer() + (size - 1));
             }
-        }catch(IOException e){}
-        try{
+        } catch (IOException e) {
+        }
+        try {
             this.close();
-        }catch(IOException e){}
+        } catch (IOException e) {
+        }
         return numeroRegistros;
     }
 
-    public Alumno obtenerAlumno(long numeroControl){
-        Alumno alumno=null;
-        try{
+    public Lote obtenerLote(int numeroLote, Prenda prenda) {
+        Lote lote = null;
+        try {
             this.open();
-            while(true){
-                if(!archivo.readBoolean())
-                    if(numeroControl==archivo.readLong()){
-                        String nombre=archivo.readUTF();
-                        byte semestre=archivo.readByte();
-                        String carrera=archivo.readUTF();
-                        float promedio=archivo.readFloat();
-                        Genero genero=Genero.values()[archivo.readByte()];
-                        alumno=new Alumno(numeroControl,nombre,semestre,carrera,promedio,genero);
-                        break;
-                    }else
-                        archivo.seek(archivo.getFilePointer()+(size-9));
-                else
-                    archivo.seek(archivo.getFilePointer()+(size-1));
-            }
-        }catch(IOException e){}
-        try{
-            this.close();
-        }catch(IOException e){}
-        return alumno;
-    }
+            while (true) {
+                if (!archivo.readBoolean()) {
+                    int numLote = archivo.readInt();
+                    if (numLote == numeroLote) {
+                        int numPiezas = archivo.readInt();
+                        String fechaStr = archivo.readUTF();
+                        String modeloPrenda = archivo.readUTF();
 
-    public Alumno obtenerAlumno(int numeroRegistro){
-        int numReg=0;
-        Alumno alumno=null;
-        try{
-            this.open();
-            while(true){
-                if(!archivo.readBoolean())
-                    if(++numReg==numeroRegistro){
-                        long nc=archivo.readLong();
-                        String nombre=archivo.readUTF();
-                        byte semestre=archivo.readByte();
-                        String carrera=archivo.readUTF();
-                        float promedio=archivo.readFloat();
-                        Genero genero=Genero.values()[archivo.readByte()];
-                        alumno=new Alumno(nc,nombre,semestre,carrera,promedio,genero);
+                        LocalDate fechaFabricacion = LocalDate.parse(fechaStr);
+                        lote = new Lote(numLote, numPiezas, fechaFabricacion, prenda);
                         break;
+                    } else {
+                        archivo.seek(archivo.getFilePointer() + (size - 9));
                     }
-                archivo.seek(archivo.getFilePointer()+(size-1));
+                } else {
+                    archivo.seek(archivo.getFilePointer() + (size - 1));
+                }
             }
-        }catch(IOException e){}
-        try{
+        } catch (IOException e) {
+        } catch (Exception e) {
+            System.err.println("Error: " + e.getMessage());
+        }
+        try {
             this.close();
-        }catch(IOException e){}
-        return alumno;
+        } catch (IOException e) {
+        }
+        return lote;
     }
 
-    public void recuperarEliminados(){
-        try{
+    public void recuperarEliminados() {
+        try {
             this.open();
-            while(true){
+            while (true) {
                 archivo.readBoolean();
-                archivo.seek(archivo.getFilePointer()-1);
+                archivo.seek(archivo.getFilePointer() - 1);
                 archivo.writeBoolean(false);
-                archivo.seek(archivo.getFilePointer()+(size-1));
+                archivo.seek(archivo.getFilePointer() + (size - 1));
             }
-        }catch(IOException e){}
-        try{
+        } catch (IOException e) {
+        }
+        try {
             this.close();
-        }catch(IOException e){}
+        } catch (IOException e) {
+        }
     }
 
     public void close() throws IOException {
