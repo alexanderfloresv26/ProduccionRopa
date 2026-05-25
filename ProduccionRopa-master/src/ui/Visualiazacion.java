@@ -7,6 +7,7 @@ import java.util.ArrayList;
 public class Visualiazacion {
 
     public void visualizaPrenda(Prenda prenda){
+        if (prenda == null) return;
         StringBuilder sb=new StringBuilder();
         sb.append(String.format("%-30s ", prenda.getModelo()));
         sb.append(String.format("%-12s ", prenda.getGenero()));
@@ -30,6 +31,7 @@ public class Visualiazacion {
     }
 
     public void visualizaLote(Lote lote){
+        if (lote == null) return;
         StringBuilder sb=new StringBuilder();
         sb.append(String.format("%08d ", lote.getNumeroLote()));
         sb.append(String.format("%-30s ", lote.getPrenda().getModelo()));

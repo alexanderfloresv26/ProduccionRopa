@@ -106,15 +106,15 @@ public class ArchivoRandomLote {
         }
     }
 
-    public void eliminarLote(Lote lote) {
+    public void modificaLote(Lote lote) {
         if (lote == null)
             throw new NullPointerException("Lote null!");
         try {
             this.open();
             archivo.seek(0);
-            long posicion = 0;
             while (true) {
                 try {
+                    long inicioRegistro = archivo.getFilePointer();
                     boolean eliminado = archivo.readBoolean();
                     if (!eliminado) {
                         int numLote = archivo.readInt();
@@ -122,14 +122,14 @@ public class ArchivoRandomLote {
                         String fechaStr = archivo.readUTF();
                         String modeloPrenda = archivo.readUTF().trim();
                         if (numLote == lote.getNumeroLote()) {
-                            archivo.seek(posicion);
-                            archivo.writeBoolean(true);
+                            archivo.seek(inicioRegistro + 1);
+                            archivo.writeInt(lote.getNumPiezas());
+                            archivo.writeUTF(lote.getFechaFabricacion().toString());
+                            archivo.writeUTF(String.format("%-30s", lote.getPrenda().getModelo()));
                             break;
                         }
-                        posicion = archivo.getFilePointer();
                     } else {
-                        archivo.seek(archivo.getFilePointer() + (size - 1));
-                        posicion = archivo.getFilePointer();
+                        archivo.seek(inicioRegistro + size);
                     }
                 } catch (IOException e) {
                     break;
@@ -140,15 +140,15 @@ public class ArchivoRandomLote {
         }
     }
 
-    public void modificaLote(Lote lote) {
+    public void eliminarLote(Lote lote) {
         if (lote == null)
             throw new NullPointerException("Lote null!");
         try {
             this.open();
             archivo.seek(0);
-            long posicion = 0;
             while (true) {
                 try {
+                    long inicioRegistro = archivo.getFilePointer();
                     boolean eliminado = archivo.readBoolean();
                     if (!eliminado) {
                         int numLote = archivo.readInt();
@@ -156,16 +156,12 @@ public class ArchivoRandomLote {
                         String fechaStr = archivo.readUTF();
                         String modeloPrenda = archivo.readUTF().trim();
                         if (numLote == lote.getNumeroLote()) {
-                            archivo.seek(posicion + 1);
-                            archivo.writeInt(lote.getNumPiezas());
-                            archivo.writeUTF(lote.getFechaFabricacion().toString());
-                            archivo.writeUTF(String.format("%-30s", lote.getPrenda().getModelo()));
+                            archivo.seek(inicioRegistro);
+                            archivo.writeBoolean(true);
                             break;
                         }
-                        posicion = archivo.getFilePointer();
                     } else {
-                        archivo.seek(archivo.getFilePointer() + (size - 1));
-                        posicion = archivo.getFilePointer();
+                        archivo.seek(inicioRegistro + size);
                     }
                 } catch (IOException e) {
                     break;
@@ -213,9 +209,13 @@ public class ArchivoRandomLote {
             this.open();
             archivo.seek(0);
             while (true) {
-                if (!archivo.readBoolean())
-                    numeroRegistros++;
-                archivo.seek(archivo.getFilePointer() + (size - 1));
+                try {
+                    if (!archivo.readBoolean())
+                        numeroRegistros++;
+                    archivo.seek(archivo.getFilePointer() + (size - 1));
+                } catch (IOException e) {
+                    break;
+                }
             }
         } catch (IOException e) {
         }
@@ -251,6 +251,50 @@ public class ArchivoRandomLote {
                     }
                 } else {
                     archivo.seek(archivo.getFilePointer() + (size - 1));
+                }
+            }
+        } catch (IOException e) {
+        } catch (Exception e) {
+            System.err.println("Error: " + e.getMessage());
+        }
+        try {
+            this.close();
+        } catch (IOException e) {
+        }
+        return lote;
+    }
+
+    public Lote obtenerLote(long numeroRegistro) {
+        int numReg = 0;
+        Lote lote = null;
+        try {
+            this.open();
+            archivo.seek(0);
+            while (true) {
+                try {
+                    boolean eliminado = archivo.readBoolean();
+                    if (!eliminado) {
+                        numReg++;
+                        int numLote = archivo.readInt();
+                        int numPiezas = archivo.readInt();
+                        String fechaStr = archivo.readUTF();
+                        String modeloPrenda = archivo.readUTF().trim();
+                        if (numReg == numeroRegistro) {
+                            LocalDate fechaFabricacion = LocalDate.parse(fechaStr);
+                            ArchivoRandomPrenda arp = new ArchivoRandomPrenda("prendas.dat");
+                            arp.open();
+                            Prenda prenda = arp.obtenerPrenda(modeloPrenda);
+                            arp.close();
+                            if (prenda != null) {
+                                lote = new Lote(numLote, numPiezas, fechaFabricacion, prenda);
+                            }
+                            break;
+                        }
+                    } else {
+                        archivo.seek(archivo.getFilePointer() + (size - 1));
+                    }
+                } catch (IOException e) {
+                    break;
                 }
             }
         } catch (IOException e) {

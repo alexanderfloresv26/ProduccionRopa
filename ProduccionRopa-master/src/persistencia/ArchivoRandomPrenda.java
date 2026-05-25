@@ -109,9 +109,9 @@ public class ArchivoRandomPrenda {
         try {
             this.open();
             archivo.seek(0);
-            long posicion = 0;
             while (true) {
                 try {
+                    long inicioRegistro = archivo.getFilePointer();
                     boolean eliminado = archivo.readBoolean();
                     if (!eliminado) {
                         String genero = archivo.readUTF().trim();
@@ -121,14 +121,12 @@ public class ArchivoRandomPrenda {
                         double costoProduccion = archivo.readDouble();
                         String temporada = archivo.readUTF().trim();
                         if (modelo.equals(prenda.getModelo())) {
-                            archivo.seek(posicion);
+                            archivo.seek(inicioRegistro);
                             archivo.writeBoolean(true);
                             break;
                         }
-                        posicion = archivo.getFilePointer();
                     } else {
-                        archivo.seek(archivo.getFilePointer() + (size - 1));
-                        posicion = archivo.getFilePointer();
+                        archivo.seek(inicioRegistro + size);
                     }
                 } catch (IOException e) {
                     break;
@@ -145,9 +143,9 @@ public class ArchivoRandomPrenda {
         try {
             this.open();
             archivo.seek(0);
-            long posicion = 0;
             while (true) {
                 try {
+                    long inicioRegistro = archivo.getFilePointer();
                     boolean eliminado = archivo.readBoolean();
                     if (!eliminado) {
                         String genero = archivo.readUTF().trim();
@@ -157,7 +155,7 @@ public class ArchivoRandomPrenda {
                         double costoProduccion = archivo.readDouble();
                         String temporada = archivo.readUTF().trim();
                         if (modelo.equals(prenda.getModelo())) {
-                            archivo.seek(posicion + 1);
+                            archivo.seek(inicioRegistro + 1);
                             archivo.writeUTF(String.format("%-10s", prenda.getGenero()));
                             archivo.writeUTF(String.format("%-30s", prenda.getModelo()));
                             archivo.writeUTF(String.format("%-20s", prenda.getTela()));
@@ -166,10 +164,8 @@ public class ArchivoRandomPrenda {
                             archivo.writeUTF(String.format("%-10s", prenda.getTemporada()));
                             break;
                         }
-                        posicion = archivo.getFilePointer();
                     } else {
-                        archivo.seek(archivo.getFilePointer() + (size - 1));
-                        posicion = archivo.getFilePointer();
+                        archivo.seek(inicioRegistro + size);
                     }
                 } catch (IOException e) {
                     break;
@@ -179,20 +175,26 @@ public class ArchivoRandomPrenda {
         } catch (IOException e) {
         }
     }
-    public long getNumeroRegistros(){
-        long numeroRegistros=0;
-        try{
+    public long getNumeroRegistros() {
+        long numeroRegistros = 0;
+        try {
             this.open();
             archivo.seek(0);
-            while(true){
-                if(!archivo.readBoolean())
-                    numeroRegistros++;
-                archivo.seek(archivo.getFilePointer()+(size-1));
+            while (true) {
+                try {
+                    if (!archivo.readBoolean())
+                        numeroRegistros++;
+                    archivo.seek(archivo.getFilePointer() + (size - 1));
+                } catch (IOException e) {
+                    break;
+                }
             }
-        }catch(IOException e){}
-        try{
+        } catch (IOException e) {
+        }
+        try {
             this.close();
-        }catch(IOException e){}
+        } catch (IOException e) {
+        }
         return numeroRegistros;
     }
 
@@ -203,20 +205,24 @@ public class ArchivoRandomPrenda {
             this.open();
             archivo.seek(0);
             while (true) {
-                boolean eliminado = archivo.readBoolean();
-                if (!eliminado) {
-                    String genero = archivo.readUTF().trim();
-                    String mod = archivo.readUTF().trim();
-                    String tela = archivo.readUTF().trim();
-                    double costoMaximo = archivo.readDouble();
-                    double costoProduccion = archivo.readDouble();
-                    String temporada = archivo.readUTF().trim();
-                    if (mod.equals(modelo)) {
-                        prenda = new Prenda(genero, mod, tela, costoMaximo, costoProduccion, temporada);
-                        break;
+                try {
+                    boolean eliminado = archivo.readBoolean();
+                    if (!eliminado) {
+                        String genero = archivo.readUTF().trim();
+                        String mod = archivo.readUTF().trim();
+                        String tela = archivo.readUTF().trim();
+                        double costoMaximo = archivo.readDouble();
+                        double costoProduccion = archivo.readDouble();
+                        String temporada = archivo.readUTF().trim();
+                        if (mod.equals(modelo)) {
+                            prenda = new Prenda(genero, mod, tela, costoMaximo, costoProduccion, temporada);
+                            break;
+                        }
+                    } else {
+                        archivo.seek(archivo.getFilePointer() + (size - 1));
                     }
-                } else {
-                    archivo.seek(archivo.getFilePointer() + (size - 1));
+                } catch (IOException e) {
+                    break;
                 }
             }
         } catch (IOException e) {
@@ -228,7 +234,7 @@ public class ArchivoRandomPrenda {
         return prenda;
     }
 
-    public Prenda obtenerPrenda(int numeroRegistro) throws ExcepcionDeTemporadaNoValida, ExcepcionDeGeneroNoValido,
+    public Prenda obtenerPrenda(long numeroRegistro) throws ExcepcionDeTemporadaNoValida, ExcepcionDeGeneroNoValido,
             ExcepcionDeCostoFueraDeLimites, ExcepcionDeCostoMaximoNoValido {
         int numReg = 0;
         Prenda prenda = null;
@@ -236,22 +242,25 @@ public class ArchivoRandomPrenda {
             this.open();
             archivo.seek(0);
             while (true) {
-                boolean eliminado = archivo.readBoolean();
-                if (!eliminado) {
-                    if (++numReg == numeroRegistro) {
+                try {
+                    boolean eliminado = archivo.readBoolean();
+                    if (!eliminado) {
+                        numReg++;
                         String genero = archivo.readUTF().trim();
                         String modelo = archivo.readUTF().trim();
                         String tela = archivo.readUTF().trim();
                         double costoMaximo = archivo.readDouble();
                         double costoProduccion = archivo.readDouble();
                         String temporada = archivo.readUTF().trim();
-                        prenda = new Prenda(genero, modelo, tela, costoMaximo, costoProduccion, temporada);
-                        break;
+                        if (numReg == numeroRegistro) {
+                            prenda = new Prenda(genero, modelo, tela, costoMaximo, costoProduccion, temporada);
+                            break;
+                        }
                     } else {
-                        archivo.seek(archivo.getFilePointer() + (size - 9));
+                        archivo.seek(archivo.getFilePointer() + (size - 1));
                     }
-                } else {
-                    archivo.seek(archivo.getFilePointer() + (size - 1));
+                } catch (IOException e) {
+                    break;
                 }
             }
         } catch (IOException e) {

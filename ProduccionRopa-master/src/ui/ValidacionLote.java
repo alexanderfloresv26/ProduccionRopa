@@ -22,7 +22,7 @@ public class ValidacionLote {
     }
 
     public int leerNumeroPiezas(){
-        return validacion.leerInt("Proporciona el total de piezas:",1,350,"Numero de piezas no valido!!");
+        return validacion.leerInt("Proporciona el total de piezas:",50,350,"Numero de piezas no valido!!");
     }
 
     public Prenda leerPrenda() throws ExcepcionDeTemporadaNoValida, ExcepcionDeGeneroNoValido,

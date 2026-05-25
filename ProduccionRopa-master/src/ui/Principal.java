@@ -192,17 +192,11 @@ public class Principal {
         }
     }
 
-    private void listarPrenda() {
+    private void listarPrenda() throws ExcepcionDeTemporadaNoValida, ExcepcionDeGeneroNoValido, ExcepcionDeCostoFueraDeLimites, ExcepcionDeCostoMaximoNoValido {
         long numReg = archivoPrenda.getNumeroRegistros();
-        for(int i = 1; i <= numReg; i++){
-            try {
+        for(long i = 1; i <= numReg; i++){
                 Prenda prenda = archivoPrenda.obtenerPrenda(i);
-                if(prenda != null){
-                    visualizacion.visualizaPrenda(prenda);
-                }
-            } catch (Exception e) {
-                System.err.println(e.getMessage());
-            }
+                visualizacion.visualizaPrenda(prenda);
         }
     }
 
@@ -221,11 +215,9 @@ public class Principal {
 
     private void listarLote() {
         long numReg = archivoLote.getNumeroRegistros();
-        for(int i = 1; i <= numReg; i++){
+        for(long i = 1; i <= numReg; i++){
             Lote lote = archivoLote.obtenerLote(i);
-            if(lote != null){
-                visualizacion.visualizaLote(lote);
-            }
+            visualizacion.visualizaLote(lote);
         }
     }
 
