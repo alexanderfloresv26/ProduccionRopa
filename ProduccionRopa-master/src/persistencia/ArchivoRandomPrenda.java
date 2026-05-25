@@ -45,13 +45,13 @@ public class ArchivoRandomPrenda {
 
     private Prenda getPrenda() throws IOException, ExcepcionDeTemporadaNoValida,
             ExcepcionDeGeneroNoValido, ExcepcionDeCostoFueraDeLimites, ExcepcionDeCostoMaximoNoValido {
-        String genero=archivo.readUTF();
-        String modelo=archivo.readUTF();
-        String tela=archivo.readUTF();
-        double costoMaximo=archivo.readDouble();
-        double costoProduccion=archivo.readDouble();
-        String temporada=archivo.readUTF();
-        return new Prenda(genero,modelo,tela,costoMaximo,costoProduccion,temporada);
+        String genero = archivo.readUTF().trim();
+        String modelo = archivo.readUTF().trim();
+        String tela = archivo.readUTF().trim();
+        double costoMaximo = archivo.readDouble();
+        double costoProduccion = archivo.readDouble();
+        String temporada = archivo.readUTF().trim();
+        return new Prenda(genero, modelo, tela, costoMaximo, costoProduccion, temporada);
     }
 
     public boolean existe(Prenda prenda) throws ExcepcionDeTemporadaNoValida, ExcepcionDeGeneroNoValido,
@@ -104,58 +104,81 @@ public class ArchivoRandomPrenda {
 
     public void eliminarPrenda(Prenda prenda) throws ExcepcionDeTemporadaNoValida, ExcepcionDeGeneroNoValido,
             ExcepcionDeCostoFueraDeLimites, ExcepcionDeCostoMaximoNoValido {
-        if(prenda==null)
+        if (prenda == null)
             throw new NullPointerException("Prenda null!");
-        try{
+        try {
             this.open();
             archivo.seek(0);
-            long posicion=0;
-            while(true){
-                boolean eliminado=archivo.readBoolean();
-                if(!eliminado){
-                    Prenda p=getPrenda();
-                    if(p.equals(prenda)){
-                        archivo.seek(posicion);
-                        archivo.writeBoolean(true);
-                        break;
+            long posicion = 0;
+            while (true) {
+                try {
+                    boolean eliminado = archivo.readBoolean();
+                    if (!eliminado) {
+                        String genero = archivo.readUTF().trim();
+                        String modelo = archivo.readUTF().trim();
+                        String tela = archivo.readUTF().trim();
+                        double costoMaximo = archivo.readDouble();
+                        double costoProduccion = archivo.readDouble();
+                        String temporada = archivo.readUTF().trim();
+                        if (modelo.equals(prenda.getModelo())) {
+                            archivo.seek(posicion);
+                            archivo.writeBoolean(true);
+                            break;
+                        }
+                        posicion = archivo.getFilePointer();
+                    } else {
+                        archivo.seek(archivo.getFilePointer() + (size - 1));
+                        posicion = archivo.getFilePointer();
                     }
-                    posicion=archivo.getFilePointer();
-                }else{
-                    archivo.seek(archivo.getFilePointer()+(size-1));
-                    posicion=archivo.getFilePointer();
+                } catch (IOException e) {
+                    break;
                 }
             }
             this.close();
-        }catch(IOException e){}
+        } catch (IOException e) {
+        }
     }
 
-    public void modificaPrenda(Prenda prenda){
-        if(prenda==null)
+    public void modificaPrenda(Prenda prenda) {
+        if (prenda == null)
             throw new NullPointerException("Prenda null!");
-        try{
+        try {
             this.open();
             archivo.seek(0);
-            while(true){
-                boolean eliminado=archivo.readBoolean();
-                if(!eliminado){
-                    String modelo=archivo.readUTF();
-                    if(modelo.trim().equals(prenda.getModelo())){
-                        archivo.writeUTF(String.format("%-20s", prenda.getTela()));
-                        archivo.writeDouble(prenda.getCostoMaximo());
-                        archivo.writeDouble(prenda.getCostoProduccion());
-                        archivo.writeUTF(String.format("%-10s", prenda.getTemporada()));
-                        break;
-                    }else{
-                        archivo.seek(archivo.getFilePointer()+(offset-9));
+            long posicion = 0;
+            while (true) {
+                try {
+                    boolean eliminado = archivo.readBoolean();
+                    if (!eliminado) {
+                        String genero = archivo.readUTF().trim();
+                        String modelo = archivo.readUTF().trim();
+                        String tela = archivo.readUTF().trim();
+                        double costoMaximo = archivo.readDouble();
+                        double costoProduccion = archivo.readDouble();
+                        String temporada = archivo.readUTF().trim();
+                        if (modelo.equals(prenda.getModelo())) {
+                            archivo.seek(posicion + 1);
+                            archivo.writeUTF(String.format("%-10s", prenda.getGenero()));
+                            archivo.writeUTF(String.format("%-30s", prenda.getModelo()));
+                            archivo.writeUTF(String.format("%-20s", prenda.getTela()));
+                            archivo.writeDouble(prenda.getCostoMaximo());
+                            archivo.writeDouble(prenda.getCostoProduccion());
+                            archivo.writeUTF(String.format("%-10s", prenda.getTemporada()));
+                            break;
+                        }
+                        posicion = archivo.getFilePointer();
+                    } else {
+                        archivo.seek(archivo.getFilePointer() + (size - 1));
+                        posicion = archivo.getFilePointer();
                     }
-                }else{
-                    archivo.seek(archivo.getFilePointer()+(size-1));
+                } catch (IOException e) {
+                    break;
                 }
             }
             this.close();
-        }catch (IOException e){}
+        } catch (IOException e) {
+        }
     }
-
     public long getNumeroRegistros(){
         long numeroRegistros=0;
         try{
@@ -175,64 +198,68 @@ public class ArchivoRandomPrenda {
 
     public Prenda obtenerPrenda(String modelo) throws ExcepcionDeTemporadaNoValida, ExcepcionDeGeneroNoValido,
             ExcepcionDeCostoFueraDeLimites, ExcepcionDeCostoMaximoNoValido {
-        Prenda prenda=null;
-        try{
+        Prenda prenda = null;
+        try {
             this.open();
             archivo.seek(0);
-            while(true){
-                boolean eliminado=archivo.readBoolean();
-                if(!eliminado){
-                    String genero=archivo.readUTF();
-                    String mod=archivo.readUTF();
-                    String tela=archivo.readUTF();
-                    double costoMaximo=archivo.readDouble();
-                    double costoProduccion=archivo.readDouble();
-                    String temporada=archivo.readUTF();
-                    if(mod.trim().equals(modelo)){
-                        prenda=new Prenda(genero,mod.trim(),tela.trim(),costoMaximo,costoProduccion,temporada.trim());
+            while (true) {
+                boolean eliminado = archivo.readBoolean();
+                if (!eliminado) {
+                    String genero = archivo.readUTF().trim();
+                    String mod = archivo.readUTF().trim();
+                    String tela = archivo.readUTF().trim();
+                    double costoMaximo = archivo.readDouble();
+                    double costoProduccion = archivo.readDouble();
+                    String temporada = archivo.readUTF().trim();
+                    if (mod.equals(modelo)) {
+                        prenda = new Prenda(genero, mod, tela, costoMaximo, costoProduccion, temporada);
                         break;
                     }
-                }else{
-                    archivo.seek(archivo.getFilePointer()+(size-1));
+                } else {
+                    archivo.seek(archivo.getFilePointer() + (size - 1));
                 }
             }
-        }catch(IOException e){}
-        try{
+        } catch (IOException e) {
+        }
+        try {
             this.close();
-        }catch(IOException e){}
+        } catch (IOException e) {
+        }
         return prenda;
     }
 
     public Prenda obtenerPrenda(int numeroRegistro) throws ExcepcionDeTemporadaNoValida, ExcepcionDeGeneroNoValido,
             ExcepcionDeCostoFueraDeLimites, ExcepcionDeCostoMaximoNoValido {
-        int numReg=0;
-        Prenda prenda=null;
-        try{
+        int numReg = 0;
+        Prenda prenda = null;
+        try {
             this.open();
             archivo.seek(0);
-            while(true){
-                boolean eliminado=archivo.readBoolean();
-                if(!eliminado){
-                    if(++numReg==numeroRegistro){
-                        String genero=archivo.readUTF();
-                        String modelo=archivo.readUTF();
-                        String tela=archivo.readUTF();
-                        double costoMaximo=archivo.readDouble();
-                        double costoProduccion=archivo.readDouble();
-                        String temporada=archivo.readUTF();
-                        prenda=new Prenda(genero,modelo.trim(),tela.trim(),costoMaximo,costoProduccion,temporada.trim());
+            while (true) {
+                boolean eliminado = archivo.readBoolean();
+                if (!eliminado) {
+                    if (++numReg == numeroRegistro) {
+                        String genero = archivo.readUTF().trim();
+                        String modelo = archivo.readUTF().trim();
+                        String tela = archivo.readUTF().trim();
+                        double costoMaximo = archivo.readDouble();
+                        double costoProduccion = archivo.readDouble();
+                        String temporada = archivo.readUTF().trim();
+                        prenda = new Prenda(genero, modelo, tela, costoMaximo, costoProduccion, temporada);
                         break;
-                    }else{
-                        archivo.seek(archivo.getFilePointer()+(size-9));
+                    } else {
+                        archivo.seek(archivo.getFilePointer() + (size - 9));
                     }
-                }else{
-                    archivo.seek(archivo.getFilePointer()+(size-1));
+                } else {
+                    archivo.seek(archivo.getFilePointer() + (size - 1));
                 }
             }
-        }catch(IOException e){}
-        try{
+        } catch (IOException e) {
+        }
+        try {
             this.close();
-        }catch(IOException e){}
+        } catch (IOException e) {
+        }
         return prenda;
     }
 
