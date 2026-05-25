@@ -29,7 +29,7 @@ public class Principal {
     }
 
     private byte opcion() {
-        return validacion.leerByte(menu, (byte) 1, (byte) 8, "Opcion invalida");
+        return validacion.leerByte(menu, (byte) 1, (byte) 5, "Opcion invalida");
     }
 
     private void agregarLote() throws ExcepcionCantidadDePrendasFueraDeLimites, ExcepcionDeTemporadaNoValida,
@@ -65,7 +65,6 @@ public class Principal {
         Prenda prenda = validacionPrenda.leerPrenda();
         try {
             archivoPrenda.agregaPrenda(prenda);
-            System.out.println("Prenda agregada exitosamente");
         } catch (IllegalArgumentException e) {
             System.err.println(e.getMessage());
         }
@@ -91,8 +90,9 @@ public class Principal {
         menu += "1.- Prendas\n";
         menu += "2.- Lotes\n";
         menu += "3.- Recuperar registros eliminados\n";
-        menu += "4.- Salir\n";
-        menu += "Proporciona opción:[1..4]:";
+        menu += "4.- Eliminar archivos fisicamente (reiniciar sistema)\n";
+        menu += "5.- Salir\n";
+        menu += "Proporciona opción:[1..5]:";
     }
 
     private void capturaModificacionesLote(Lote lote) {
@@ -227,6 +227,44 @@ public class Principal {
         System.out.println("Registros eliminados recuperados!!");
     }
 
+    private void eliminarArchivosFisicos() {
+        try {
+            java.io.File archivoPrendaFile = new java.io.File("prendas.dat");
+            java.io.File archivoLoteFile = new java.io.File("lotes.dat");
+
+            boolean prendaEliminado = false;
+            boolean loteEliminado = false;
+
+            if (archivoPrendaFile.exists()) {
+                prendaEliminado = archivoPrendaFile.delete();
+                if (prendaEliminado) {
+                    System.out.println("Archivo prendas.dat eliminado fisicamente");
+                } else {
+                    System.out.println("Error al eliminar prendas.dat");
+                }
+            } else {
+                System.out.println("El archivo prendas.dat no existe");
+            }
+
+            if (archivoLoteFile.exists()) {
+                loteEliminado = archivoLoteFile.delete();
+                if (loteEliminado) {
+                    System.out.println("Archivo lotes.dat eliminado fisicamente");
+                } else {
+                    System.out.println("Error al eliminar lotes.dat");
+                }
+            } else {
+                System.out.println("El archivo lotes.dat no existe");
+            }
+
+            if (prendaEliminado || loteEliminado) {
+                System.out.println("Los archivos se regeneraran al agregar nuevos datos");
+            }
+        } catch (Exception e) {
+            System.err.println("Error al eliminar archivos: " + e.getMessage());
+        }
+    }
+
     public void run() throws ExcepcionDeTemporadaNoValida, ExcepcionDeGeneroNoValido,
             ExcepcionDeCostoFueraDeLimites, ExcepcionDeCostoMaximoNoValido, ExcepcionCantidadDePrendasFueraDeLimites {
         byte opcion;
@@ -242,8 +280,11 @@ public class Principal {
                 case 3:
                     recuperarEliminados();
                     break;
+                case 4:
+                    eliminarArchivosFisicos();
+                    break;
             }
-        } while (opcion != 4);
+        } while (opcion != 5);
     }
 
     public void runR() throws ExcepcionDeTemporadaNoValida, ExcepcionDeGeneroNoValido,
